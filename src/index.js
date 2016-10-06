@@ -1,7 +1,6 @@
 'use strict'
 
 import Promise from 'bluebird'
-import assert from 'assert'
 import utils from './lib/utils'
 import Login from './lib/login'
 import MobileLogin from './lib/mobile-login'
@@ -34,10 +33,10 @@ let Fut = class Fut extends Methods {
    */
   constructor (options) {
     super()
-    assert(options.email, 'Email is required')
-    assert(options.password, 'Password is required')
-    assert(options.secret, 'Secret is required')
-    assert(options.platform, 'Platform is required')
+    if(!options.email) throw new Error('Email is required');
+    if(!options.password) throw new Error('Password is required');
+    if(!options.secret) throw new Error('Secret is required');
+    if(!options.platform) throw new Error('Platform is required');
 
     let defaultOptions = {
       RPM: 0,
