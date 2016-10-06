@@ -311,13 +311,13 @@ module.exports = function (options) {
       if (!body.userAccountInfo) return loginDetails.loginCb(new Error('Unable to get account infos.'))
 
       loginResponse.persona = __.find(body.userAccountInfo.personas,
-        function(persona) {
-          return __.some(persona.userClubList, function(userClub) {
+        function (persona) {
+          return __.some(persona.userClubList, function (userClub) {
             return userClub.platform === loginDetails.platform
-          });
-        });
+          })
+        })
 
-      if(!loginResponse.persona) return loginDetails.loginCb(new Error("Unable to get account info persona."));
+      if (!loginResponse.persona) return loginDetails.loginCb(new Error('Unable to get account info persona.'))
 
       getSession()
     })
