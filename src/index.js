@@ -33,10 +33,10 @@ let Fut = class Fut extends Methods {
    */
   constructor (options) {
     super()
-    if(!options.email) throw new Error('Email is required');
-    if(!options.password) throw new Error('Password is required');
-    if(!options.secret) throw new Error('Secret is required');
-    if(!options.platform) throw new Error('Platform is required');
+    if (!options.email) throw new Error('Email is required')
+    if (!options.password) throw new Error('Password is required')
+    if (!options.secret) throw new Error('Secret is required')
+    if (!options.platform) throw new Error('Platform is required')
 
     let defaultOptions = {
       RPM: 0,
