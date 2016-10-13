@@ -7,7 +7,6 @@ import Login from './lib/login'
 import MobileLogin from './lib/mobile-login'
 import _ from 'underscore'
 import Methods from './lib/methods'
-import moment from 'moment'
 import request from 'request'
 import bottleneck from 'bottleneck'
 
@@ -40,7 +39,7 @@ let Fut = class Fut extends Methods {
     assert(options.platform, 'Platform is required')
 
     let defaultOptions = {
-      RPM: 20,
+      RPM: 10,
       loginType: 'web'
     }
 
