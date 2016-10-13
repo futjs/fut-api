@@ -7,8 +7,8 @@ import Login from './lib/login'
 import MobileLogin from './lib/mobile-login'
 import _ from 'underscore'
 import Methods from './lib/methods'
-import moment from 'moment'
 import request from 'request'
+import bottleneck from 'bottleneck'
 
 let Fut = class Fut extends Methods {
   static isPriceValid = utils.isPriceValid;
@@ -27,7 +27,6 @@ let Fut = class Fut extends Methods {
    * @param  {Boolean} options.saveVariable   [description]
    * @param  {Boolean} options.loadVariable   [description]
    * @param  {Number}  options.RPM            [description]
-   * @param  {Number}  options.minDelay       [description]
    * @param  {[String]} options.proxy         [description]
    * @param  {[String]} options.loginType     [description]
    * @return {[type]}                         [description]
@@ -40,14 +39,15 @@ let Fut = class Fut extends Methods {
     assert(options.platform, 'Platform is required')
 
     let defaultOptions = {
-      RPM: 0,
-      minDelay: 0,
+      RPM: 10,
       loginType: 'web'
     }
 
     this.options = {}
     this.isReady = false // instance will be ready after we called _init func
     Object.assign(this.options, defaultOptions, options)
+
+    this.limiter = new bottleneck(1, 60000 / this.options.RPM); // Wait time before next request is executed
 
     if (this.options.loginType === 'web') {
       this.loginLib = Promise.promisifyAll(new Login({proxy: options.proxy}))
@@ -73,9 +73,6 @@ let Fut = class Fut extends Methods {
     if (cookie) {
       this.loginLib.setCookieJarJSON(cookie)
     }
-
-    const minuteLimitStartedAt = await this.loadVariable('minuteLimitStartedAt')
-    this.minuteLimitStartedAt = minuteLimitStartedAt || moment()
   }
 
   async login () {
@@ -108,9 +105,6 @@ let Fut = class Fut extends Methods {
   async api (url, options) {
     if (!this.isReady) throw new Error('Fut instance is not ready yet, run login first!')
 
-    // limit handler
-    await this._limitHandler()
-
     const defaultOptions = {
       xHttpMethod: 'GET',
       headers: {}
@@ -123,7 +117,14 @@ let Fut = class Fut extends Methods {
     options.headers['X-HTTP-Method-Override'] = options.xHttpMethod
     delete options.xHttpMethod
 
-    const {statusCode, statusMessage, body} = await this.rawApi(options)
+    let apiResponse;
+    if(options.overrideLimiter) {
+      apiResponse = await this.rawApi(options)
+    } else {
+      apiResponse = await this.limiter.schedule(this.rawApi, options)
+    }
+
+    const {statusCode, statusMessage, body} = apiResponse
 
     if (statusCode.toString()[0] !== '2') {
       const request = {url, options: options}
@@ -137,33 +138,6 @@ let Fut = class Fut extends Methods {
       throw err
     }
     return body
-  }
-
-  async _limitHandler () {
-    // seconds
-    const sinceLastRequest = moment().diff(this.lastRequestAt)
-    if (sinceLastRequest < this.options.minDelay) {
-      console.log('Waiting on second limit ...')
-      await Promise.delay(this.options.minDelay - sinceLastRequest)
-    }
-
-    // minutes
-    if (moment().diff(this.minuteLimitStartedAt, 'minutes') >= 1 || !this.minuteLimitStartedAt) {
-      this.minuteLimitStartedAt = moment()
-      this.requestsThisMinute = 0
-    } else {
-      this.requestsThisMinute++
-    }
-
-    if ((this.requestsThisMinute >= this.options.RPM) && this.options.RPM !== 0) {
-      const resetsAt = this.minuteLimitStartedAt.add(1, 'minute')
-      const needsToReset = resetsAt.diff(moment())
-      console.log(`Waiting on RPM ... ${needsToReset}`)
-      await Promise.delay(needsToReset)
-    }
-
-    // TODO: continue this
-    this.lastRequestAt = moment()
   }
 }
 
