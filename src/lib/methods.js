@@ -46,7 +46,7 @@ export default class Methods {
     if (tId === 0) throw new Error('0 is not a valid tradeId')
 
     let url = utils.format(urls.api.placebid, [tId])
-    let options = {body, xHttpMethod: 'PUT'}
+    let options = {body, xHttpMethod: 'PUT', overrideLimiter: true}
     return this.api(url, options)
   }
 

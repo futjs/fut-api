@@ -370,7 +370,7 @@ module.exports = function (options) {
             'X-UT-PHISHING-TOKEN': loginResponse.token,
             'X-HTTP-Method-Override': 'GET',
             'X-UT-Route': 'https://' + loginResponse.sessionData.ipPort.split(':')[0],
-            'x-flash-version': '20,0,0,272'
+            'X-Requested-With': 'ShockwaveFlash/23.0.0.166'
           }
         }
         loginResponse.apiRequest = defaultRequest.defaults(requestConfigObj)
