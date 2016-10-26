@@ -85,7 +85,7 @@ export default class MobileLogin {
   async getLogin () {
     // We will use machine key later at getNucleusCode
     this.machineKey = await generateMachineKey()
-    const url = 'https://accounts.ea.com/connect/auth?client_id=FIFA-16-MOBILE-COMPANION&response_type=code&display=web2/login&scope=basic.identity+offline+signin&locale=en_US&prompt=login&machineProfileKey=' + this.machineKey
+    const url = 'https://accounts.ea.com/connect/auth?client_id=FIFA-17-MOBILE-COMPANION&response_type=code&display=web2/login&scope=basic.identity+offline+signin&locale=en_US&prompt=login&machineProfileKey=' + this.machineKey
     const response = await this.defaultRequest.getAsync(url)
 
     const title = getTitle(response)
@@ -184,7 +184,7 @@ export default class MobileLogin {
   }
 
   async wtfLogin (code) {
-    const postUrl = `https://accounts.ea.com/connect/token?grant_type=authorization_code&code=${code}&client_id=FIFA-16-MOBILE-COMPANION&client_secret=KrEoFK9ssvXKRWnTMgAu1OAMn7Y37ueUh1Vy7dIk2earFDUDABCvZuNIidYxxNbhwbj3y8pq6pSf8zBW`
+    const postUrl = `https://accounts.ea.com/connect/token?grant_type=authorization_code&code=${code}&client_id=FIFA-17-MOBILE-COMPANION&client_secret=qIdl15XHu4VWrcolro37Um0JiuRjnbIspnYtXmv3zr6pPL9S0N9H1IutSFJvnCORH3isebmeVdCtHaFC`
     let response = await this.defaultRequest.postAsync(postUrl, {json: true, headers: {'content-type': 'application/x-www-form-urlencoded'}})
     let token = response.body.access_token
     assert(token, 'Failed to get access token at `wtfLogin`')
@@ -194,13 +194,13 @@ export default class MobileLogin {
     await this.defaultRequest.getAsync(url1)
 
     const nucleusUserId = await this.getPid(token)
-    const sidCode = await this.getSidCode(token)
+    // const sidCode = await this.getSidCode(token)
     const sidCode2 = await this.getSidCode(token)
     // We will get the api url after shards
     await this.getShards()
-    await this.getUserAccounts(nucleusUserId)
-    const powSessionId = await this.getPowSid(sidCode)
-    const nucleusPersonaId = await this.getNucleusPersonaId(nucleusUserId, powSessionId)
+    const nucleusPersonaId = await this.getUserAccounts(nucleusUserId)
+    // const powSessionId = await this.getPowSid(sidCode)
+    // const nucleusPersonaId = await this.getNucleusPersonaId(nucleusUserId, powSessionId)
     const sid = await this.getSid(sidCode2, nucleusPersonaId)
 
     const requestConfigObj1 = {
@@ -263,11 +263,12 @@ export default class MobileLogin {
 
   async getUserAccounts (nucleusUserId) {
     const timestamp = new Date().getTime()
-    const url = `${this.apiUrl}/ut/game/fifa16/user/accountinfo?sku=FUT16IOS&_=${timestamp}`
-    return await this.defaultRequest.getAsync(url, {json: true, headers: {
+    const url = `${this.apiUrl}/ut/game/fifa17/user/accountinfo?sku=FUT17IOS&_=${timestamp}`
+    const {body} = await this.defaultRequest.getAsync(url, {json: true, headers: {
       'Easw-Session-Data-Nucleus-Id': nucleusUserId,
       'X-UT-SID': ''
     }})
+    return body.userAccountInfo.personas[0].personaId
   }
 
   async getNucleusPersonaId (nucleusUserId, powSessionId) {
@@ -283,9 +284,9 @@ export default class MobileLogin {
 
   async getSid (code, nucleusPersonaId) {
     const requestBody = {
-      isReadOnly: true,
-      sku: 'FUT16IOS',
-      clientVersion: 20,
+      isReadOnly: false,
+      sku: 'FUT17IOS',
+      clientVersion: 21,
       locale: 'en-US',
       method: 'authcode',
       priorityLevel: 4,
@@ -315,7 +316,7 @@ export default class MobileLogin {
   async getPowSid (code) {
     const requestBody = {
       isReadOnly: true,
-      sku: 'FUT16IOS',
+      sku: 'FUT17IOS',
       clientVersion: 20,
       locale: 'en-US',
       method: 'authcode',
@@ -343,7 +344,7 @@ export default class MobileLogin {
   }
 
   async validate () {
-    const uri = `/ut/game/fifa16/phishing/validate?answer=${this.options.secret}`
+    const uri = `/ut/game/fifa17/phishing/validate?answer=${this.options.secret}`
     const {body} = await this.api.postAsync(uri, {body: this.options.secret})
     return body.token
   }
@@ -377,15 +378,15 @@ async function randomHex (length, uppercase = true) {
 function getGameSku (platform) {
   switch (platform) {
     case 'pc':
-      return 'FFA16PCC'
+      return 'FFA17PCC'
     case 'ps3':
-      return 'FFA16PS3'
+      return 'FFA17PS3'
     case 'ps4':
-      return 'FFA16PS4'
+      return 'FFA17PS4'
     case 'x360':
-      return 'FFA16XBX'
+      return 'FFA17XBX'
     case 'xone':
-      return 'FFA16XBO'
+      return 'FFA17XBO'
   }
 
   return null
