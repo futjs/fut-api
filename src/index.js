@@ -133,7 +133,9 @@ let Fut = class Fut extends Methods {
 
     if (statusCode.toString()[0] !== '2') {
       const request = {url, options: options}
-      throw new Error(`FUT api http error: ${statusCode} ${statusMessage} ${JSON.stringify(body)} request was: ${JSON.stringify(request)}`)
+      const err = new Error(`FUT api http error: ${statusCode} ${statusMessage} ${JSON.stringify(body)} request was: ${JSON.stringify(request)}`)
+      err.futApiStatusCode = Number(statusCode)
+      throw err
     }
 
     if (utils.isApiError(body)) {
