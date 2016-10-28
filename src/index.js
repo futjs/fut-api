@@ -30,6 +30,7 @@ let Fut = class Fut extends Methods {
    * @param  {Number}  options.minDelay       [description]
    * @param  {[String]} options.proxy         [description]
    * @param  {[String]} options.loginType     [description]
+   * @param  {[Function]} options.preHook     [Function that return a promise]
    * @return {[type]}                         [description]
    */
   constructor (options) {
@@ -47,7 +48,11 @@ let Fut = class Fut extends Methods {
 
     this.options = {}
     this.isReady = false // instance will be ready after we called _init func
-    Object.assign(this.options, defaultOptions, options)
+    Object.assign(this.options, defaultOptions, _.omit(options, 'preHook'))
+
+    if (_.isFunction(options.preHook)) {
+      this.preHook = options.preHook.bind(this)
+    }
 
     if (this.options.loginType === 'web') {
       this.loginLib = Promise.promisifyAll(new Login({proxy: options.proxy}))
@@ -110,6 +115,7 @@ let Fut = class Fut extends Methods {
 
     // limit handler
     await this._limitHandler()
+    if (this.preHook) await this.preHook()
 
     const defaultOptions = {
       xHttpMethod: 'GET',
