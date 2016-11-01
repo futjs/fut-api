@@ -132,6 +132,7 @@ export default class MobileLogin {
 
     const response = await this.defaultRequest.getAsync(nextUrl)
     const title = getTitle(response)
+    if (title === 'Account Update') return this.acceptAccountUpdate(response.request.href)
     if (title === 'Login Verification') return this.handleTwoFactorCode(response.request.href)
     else if (response.request.href.includes('code=')) {
       try {
@@ -181,6 +182,35 @@ export default class MobileLogin {
       }
     })
     return this.wtfLogin(code)
+  }
+
+  async acceptAccountUpdate (url) {
+    const response = await this.defaultRequest.postAsync(url, {
+      form: {
+        '_eventId': 'submit'
+      }
+    })
+    const title = getTitle(response)
+    if (title === 'Login Verification') return this.chooseEmailSending(response.request.href)
+
+    throw new Error('Unknown response. Unable to login. At acceptAccountUpdate')
+  }
+
+  async chooseEmailSending (url) {
+    const response = this.defaultRequest.postAsync(url, {
+      form: {
+        tfa_type: '',
+        twofactorType: 'EMAIL',
+        country: 0,
+        phoneNumber: '',
+        _eventId: 'submit',
+        appDevice: 'IPHONE'
+      }
+    })
+    const title = getTitle(response)
+    if (title === 'Login Verification') return this.handleTwoFactorCode(response.request.href)
+
+    throw new Error('Unknown response. Unable to login. At chooseEmailSending')
   }
 
   async wtfLogin (code) {
