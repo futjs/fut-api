@@ -31,7 +31,8 @@ const urls = (version:number = 17) => {
       squadList: `/ut/game/fifa${version}/squad/list`,
       squadDetails: `/ut/game/fifa${version}/squad/{0}`,
       sold: `/ut/game/fifa${version}/trade/sold`,
-      unassigned: `/ut/game/fifa${version}/purchased/items`
+      unassigned: `/ut/game/fifa${version}/purchased/items`,
+      pricelimit: `ut/game/fifa${version}/marketdata/item/pricelimits`
     },
     resource: {
       player: ''

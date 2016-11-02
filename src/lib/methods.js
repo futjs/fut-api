@@ -97,6 +97,22 @@ export default class Methods {
   quickSell = (itemDataId) => this.api(urls.api.item + utils.format('/{0}', [itemDataId]), { xHttpMethod: 'DELETE' })
 
   deleteSoldFromTrade = () => this.api(urls.api.sold, {xHttpMethod: 'DELETE'})
+
+  /**
+  example response:
+  [{
+  "source": "ITEM_DEFINITION",
+  "defId": 228999,
+  "itemId": 261211112028,
+  "minPrice": 150,
+  "maxPrice": 10000
+  }]
+  */
+  getPriceLimit = (itemIds: [number]) => {
+    let urlParameters = `?itemIdList=${itemIds.join(',')}`
+    let url = urls.api.pricelimit + urlParameters
+    return this.api(url)
+  }
 }
 
 function toUrlParameters (obj) {
