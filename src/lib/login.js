@@ -8,6 +8,8 @@ module.exports = function (options) {
   var CookieJar = require('tough-cookie').CookieJar
   var utils = require('./utils')
   const lodash = require('lodash')
+  const debug = require('debug')('fut-api')
+  const Promise = require('bluebird')
 
   var defaultRequest = null
 
@@ -138,13 +140,14 @@ module.exports = function (options) {
     defaultRequest.get(urls.login.main, function (error, response, body) {
       if (error) return loginDetails.loginCb(error)
 
+      debug('getMain() html was')
+      debug(body)
+
       if (body.indexOf('<title>FIFA Football | Football Club | EA SPORTS</title>') > 0) return getNucleus()
-
       if (body.indexOf('<title>FIFA Football | FUT Web App | EA SPORTS</title>') > 0) return getNucleus()
-
       if (body.indexOf('<title>Log In</title>') > 0) return loginForm(response.request.href)
 
-      loginDetails.loginCb(new Error('Unknown response. Unable to login.'))
+      loginDetails.loginCb(new Error('Unknown response. Unable to login. getMain()'))
     })
   }
 
@@ -278,7 +281,9 @@ module.exports = function (options) {
     defaultRequest = defaultRequest.defaults(requestConfigObj)
     lodash.merge(loginDefaults, requestConfigObj)
 
-    defaultRequest.get(urls.login.shards, function (error, responsse, body) {
+    const timestamp = new Date().getTime()
+    const requestUrl = urls.login.shards + `?_=${timestamp}`
+    defaultRequest.get(requestUrl, function (error, responsse, body) {
       if (error) return loginDetails.loginCb(error)
 
       if (!body || !body.shardInfo) return loginDetails.loginCb(new Error('Unable to get shards. Unable to login.'))
@@ -286,6 +291,17 @@ module.exports = function (options) {
       loginResponse.shardInfos = body.shardInfo
 
       getAccount()
+    })
+
+    getNoop()
+  }
+
+  function getNoop () {
+    const timestamp = new Date().getTime()
+    const requestUrl = urls.login.noop + `?_=${timestamp}`
+    defaultRequest.get(requestUrl, function (error, response, body) {
+      if (error) console.log('noop error')
+      console.log('noop response', response.statusCode, body)
     })
   }
 
@@ -305,9 +321,16 @@ module.exports = function (options) {
     defaultRequest = defaultRequest.defaults(requestConfigObj)
     lodash.merge(loginDefaults, requestConfigObj)
 
-    defaultRequest.get(urls.login.accounts, function (error, response, body) {
+    const timestamp = new Date().getTime()
+    const requestUrl = urls.login.accounts + `${timestamp}`
+    defaultRequest.get(requestUrl, function (error, response, body) {
       if (error) return loginDetails.loginCb(error)
 
+      debug('getAccount()', body)
+      debug('getAccount code', body.code)
+      if (body.code === '500') {
+        return detectBan()
+      }
       if (!body.userAccountInfo) return loginDetails.loginCb(new Error('Unable to get account infos.'))
 
       loginResponse.persona = __.find(body.userAccountInfo.personas,
@@ -321,6 +344,16 @@ module.exports = function (options) {
 
       getSession()
     })
+  }
+
+  function detectBan () {
+    const dr = Promise.promisifyAll(defaultRequest)
+    Promise.coroutine(function * () {
+      const checkUrl = 'https://www.easports.com/iframe/fut17/?locale=en_US&baseShowoffUrl=https%3A%2F%2Fwww.easports.com%2Ffifa%2Fultimate-team%2Fweb-app%2Fshow-off&guest_app_uri=http%3A%2F%2Fwww.easports.com%2Ffifa%2Fultimate-team%2Fweb-app'
+      const resp = yield dr.getAsync(checkUrl)
+      // TODO finish this
+      console.log('detect ban response', resp)
+    })().catch((e) => loginDetails.loginCb(e))
   }
 
   function getSession () {

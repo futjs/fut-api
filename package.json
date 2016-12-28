@@ -35,6 +35,7 @@
     "babel-runtime": "^6.9.0",
     "bluebird": "^3.4.0",
     "cheerio": "^0.22.0",
+    "debug": "^2.3.2",
     "moment": "^2.13.0",
     "request": "2.67.0",
     "tough-cookie": "2.2.1",

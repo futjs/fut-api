@@ -8,6 +8,8 @@ import eaHasher from './eaHasher'
 import {CookieJar} from 'tough-cookie'
 import lodash from 'lodash'
 
+const debug = require('debug')('fut-api')
+
 const crypto = Promise.promisifyAll(require('crypto'))
 
 export default class MobileLogin {
@@ -112,6 +114,7 @@ export default class MobileLogin {
     const response = await this.defaultRequest.postAsync(url, {form})
     const title = getTitle(response)
 
+    debug(`postLogin() title was: ${title}`)
     if (title === 'Log In') throw new Error('Unable to login. Wrong email or password ?')
     if (!response.body.includes('redirectUri')) {
       throw new Error(`Unknow response at 'postLogin' title was: ${title}`)
